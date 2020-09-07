@@ -1,11 +1,10 @@
 package com.example.facedetectiondemo
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
@@ -26,9 +25,10 @@ import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity(), ImageAnalyzer.CallBackAnalyzer {
     lateinit var cameraExecutor: ExecutorService
-    lateinit var detector: FaceDetector
+    lateinit var faceDetector: FaceDetector
+    lateinit var requiredRotations: ArrayList<Int>
 
-    //    lateinit var tv_direct: TextView
+    //lateinit var tv_direct: TextView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -48,9 +48,10 @@ class MainActivity : AppCompatActivity(), ImageAnalyzer.CallBackAnalyzer {
                 .setClassificationMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
                 .enableTracking()
                 .build();
-        detector = FaceDetection.getClient(options);
+        faceDetector = FaceDetection.getClient(options);
 
-//        tv_direct = findViewById(R.id.tv_direct);
+        requiredRotations = ArrayList(listOf(FaceRotation.LEFT, FaceRotation.RIGHT, FaceRotation.UP, FaceRotation.DOWN))
+        tv_direct.text = ("Please turn your face " + FaceRotation.valueOfs[requiredRotations.first()])
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
@@ -66,12 +67,12 @@ class MainActivity : AppCompatActivity(), ImageAnalyzer.CallBackAnalyzer {
             val preview = Preview.Builder().build()
                     .also { it.setSurfaceProvider(viewFinder.createSurfaceProvider()) }
 
-            val imageAnalyzer = ImageAnalyzer(detector);
-            imageAnalyzer.setCallbacks(this)
             val imageAnalysis = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
                     .also {
+                        val imageAnalyzer = ImageAnalyzer(faceDetector);
+                        imageAnalyzer.setCallbacks(this)
                         it.setAnalyzer(cameraExecutor, imageAnalyzer)
                     }
 
@@ -114,27 +115,55 @@ class MainActivity : AppCompatActivity(), ImageAnalyzer.CallBackAnalyzer {
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(android.Manifest.permission.CAMERA);
+
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        cameraExecutor.shutdown();
+//    override fun onDestroy() {
+//        super.onDestroy()
+//    }
+
+    private fun onDetectionCompleted() {
+        faceDetector.close()
+        cameraExecutor.shutdown()
+        val intent = Intent(this, DetectionResultsActivity::class.java)
+        startActivity(intent)
     }
 
-    private fun changeDirect(text: String) {
-        tv_direct.text = text
-    }
 
-    override fun onFaceAngleChange(text: String) {
-        changeDirect(text);
+    override fun onFaceAngleChange(rotation: Int) {
+        tv_rotation.text = ("Rotation: " + FaceRotation.valueOfs[rotation])
+        if (rotation == requiredRotations.first()) {
+            requiredRotations.remove(requiredRotations.first())
+            if (requiredRotations.isEmpty()) {
+                tv_direct.text = ("Authentication successfully!")
+                onDetectionCompleted()
+                return
+            }
+            tv_direct.text = ("Please turn face " + FaceRotation.valueOfs[rotation + 1])
+        }
     }
 
 }
 
+
+class FaceRotation {
+    companion object {
+        const val STRAIGHT = 0
+        const val LEFT = 1
+        const val RIGHT = 2
+        const val UP = 3
+        const val DOWN = 4
+        const val ANGLE = 35
+        val valueOfs = mapOf(STRAIGHT to "straight", LEFT to "left", RIGHT to "right", UP to "up", DOWN to "down")
+    }
+}
+
+
 class ImageAnalyzer(var detector: FaceDetector) : ImageAnalysis.Analyzer {
 
+
     interface CallBackAnalyzer {
-        fun onFaceAngleChange(text: String)
+        fun onFaceAngleChange(rotation: Int)
     }
 
     private lateinit var callBackAnalyzer: CallBackAnalyzer
@@ -165,14 +194,19 @@ class ImageAnalyzer(var detector: FaceDetector) : ImageAnalysis.Analyzer {
         for (face in faces) {
             var rotY = face.headEulerAngleY
             var rotX = face.headEulerAngleX
-//                println("rotY: $rotY")
-//                println("rotX: $rotX")
+//            println("rotY: $rotY")
+//            println("rotX: $rotX")
             when {
-                rotY > 45 -> callBackAnalyzer.onFaceAngleChange("face is turn left")
-                rotY < -45 -> callBackAnalyzer.onFaceAngleChange("face is turn right")
-                else -> callBackAnalyzer.onFaceAngleChange("face is straight")
+                rotY > FaceRotation.ANGLE -> callBackAnalyzer.onFaceAngleChange(FaceRotation.LEFT)
+                rotY < -FaceRotation.ANGLE -> callBackAnalyzer.onFaceAngleChange(FaceRotation.RIGHT)
+                else -> {
+                    when {
+                        rotX > FaceRotation.ANGLE -> callBackAnalyzer.onFaceAngleChange(FaceRotation.UP)
+                        rotX < -FaceRotation.ANGLE -> callBackAnalyzer.onFaceAngleChange(FaceRotation.DOWN)
+                        else -> callBackAnalyzer.onFaceAngleChange(FaceRotation.STRAIGHT)
+                    }
+                }
             }
-
         }
     }
 }

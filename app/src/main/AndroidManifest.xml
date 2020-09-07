@@ -9,8 +9,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity android:name=".DetectionResultsActivity" />
         <activity
-            android:name="com.example.facedetectiondemo.MainActivity"
+            android:name=".MainActivity"
             android:exported="true">
             <meta-data
                 android:name="com.google.firebase:firebase-ml-vision.DEPENDENCIES"

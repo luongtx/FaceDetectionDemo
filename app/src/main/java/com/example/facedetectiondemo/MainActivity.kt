@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.util.Size
 import android.widget.Toast
@@ -21,13 +22,16 @@ import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import kotlinx.android.synthetic.main.activity_main.*
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.collections.ArrayList
 
 class MainActivity : AppCompatActivity(), ImageAnalyzer.CallBackAnalyzer {
     lateinit var cameraExecutor: ExecutorService
     lateinit var faceDetector: FaceDetector
-    lateinit var requiredRotations: ArrayList<Int>
+    lateinit var targetHeadRotations: ArrayList<Int>
+    lateinit var tts: TextToSpeech
 
     //lateinit var tv_direct: TextView
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,8 +55,13 @@ class MainActivity : AppCompatActivity(), ImageAnalyzer.CallBackAnalyzer {
                 .build();
         faceDetector = FaceDetection.getClient(options);
 
-        requiredRotations = ArrayList(listOf(FaceRotation.STRAIGHT, FaceRotation.LEFT, FaceRotation.RIGHT, FaceRotation.UP, FaceRotation.DOWN))
-        tv_direct.text = ("Please keep your face " + FaceRotation.valueOfs[requiredRotations.first()])
+        targetHeadRotations = ArrayList(listOf(FaceRotation.STRAIGHT, FaceRotation.LEFT, FaceRotation.RIGHT, FaceRotation.UP, FaceRotation.DOWN))
+        tv_direct.text = ("Please keep your face " + FaceRotation.valueOfs[targetHeadRotations.first()])
+
+        tts = TextToSpeech(this) {
+            tts.language = Locale.US
+        }
+        tts.speak(tv_direct.text.toString(), TextToSpeech.QUEUE_FLUSH, null, null)
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
@@ -70,7 +79,7 @@ class MainActivity : AppCompatActivity(), ImageAnalyzer.CallBackAnalyzer {
 
             val imageAnalysis = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .setTargetResolution(Size(360,480))
+                    .setTargetResolution(Size(360, 480))
                     .build()
                     .also {
                         val imageAnalyzer = ImageAnalyzer(faceDetector);
@@ -134,14 +143,15 @@ class MainActivity : AppCompatActivity(), ImageAnalyzer.CallBackAnalyzer {
 
     override fun onFaceAngleChange(rotation: Int) {
         tv_rotation.text = ("Rotation: " + FaceRotation.valueOfs[rotation])
-        if (rotation == requiredRotations.first()) {
-            requiredRotations.remove(requiredRotations.first())
-            if (requiredRotations.isEmpty()) {
+        if (rotation == targetHeadRotations.first()) {
+            targetHeadRotations.remove(targetHeadRotations.first())
+            if (targetHeadRotations.isEmpty()) {
                 tv_direct.text = ("Authentication successfully!")
                 onDetectionCompleted()
                 return
             }
-            tv_direct.text = ("Please turn face " + FaceRotation.valueOfs[rotation + 1])
+            tv_direct.text = ("Please turn your face " + FaceRotation.valueOfs[rotation + 1])
+            tts.speak(tv_direct.text.toString(), TextToSpeech.QUEUE_FLUSH, null, null)
         }
     }
 
@@ -155,7 +165,7 @@ class FaceRotation {
         const val RIGHT = 2
         const val UP = 3
         const val DOWN = 4
-        const val ANGLE = 35
+        const val ANGLE = 38
         val valueOfs = mapOf(STRAIGHT to "straight", LEFT to "left", RIGHT to "right", UP to "up", DOWN to "down")
     }
 }

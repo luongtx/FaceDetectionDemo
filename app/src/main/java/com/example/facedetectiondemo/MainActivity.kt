@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.util.Size
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
@@ -50,8 +51,8 @@ class MainActivity : AppCompatActivity(), ImageAnalyzer.CallBackAnalyzer {
                 .build();
         faceDetector = FaceDetection.getClient(options);
 
-        requiredRotations = ArrayList(listOf(FaceRotation.LEFT, FaceRotation.RIGHT, FaceRotation.UP, FaceRotation.DOWN))
-        tv_direct.text = ("Please turn your face " + FaceRotation.valueOfs[requiredRotations.first()])
+        requiredRotations = ArrayList(listOf(FaceRotation.STRAIGHT, FaceRotation.LEFT, FaceRotation.RIGHT, FaceRotation.UP, FaceRotation.DOWN))
+        tv_direct.text = ("Please keep your face " + FaceRotation.valueOfs[requiredRotations.first()])
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
@@ -69,6 +70,7 @@ class MainActivity : AppCompatActivity(), ImageAnalyzer.CallBackAnalyzer {
 
             val imageAnalysis = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .setTargetResolution(Size(360,480))
                     .build()
                     .also {
                         val imageAnalyzer = ImageAnalyzer(faceDetector);

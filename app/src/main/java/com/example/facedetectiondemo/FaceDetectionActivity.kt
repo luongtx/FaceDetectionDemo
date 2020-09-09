@@ -3,6 +3,7 @@ package com.example.facedetectiondemo
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.util.Log
@@ -21,7 +22,7 @@ import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
 import com.google.mlkit.vision.face.FaceDetectorOptions
-import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_face_detect.*
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -36,7 +37,7 @@ class MainActivity : AppCompatActivity(), ImageAnalyzer.CallBackAnalyzer {
     //lateinit var tv_direct: TextView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_face_detect)
 
         //request permission
         if (allPermissionsGranted()) {
@@ -46,7 +47,6 @@ class MainActivity : AppCompatActivity(), ImageAnalyzer.CallBackAnalyzer {
                     this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
         }
-        cameraExecutor = Executors.newSingleThreadExecutor();
 
         //set firebase detector options
         val options = FaceDetectorOptions.Builder()
@@ -55,13 +55,14 @@ class MainActivity : AppCompatActivity(), ImageAnalyzer.CallBackAnalyzer {
                 .build();
         faceDetector = FaceDetection.getClient(options);
 
-        targetHeadRotations = ArrayList(listOf(FaceRotation.STRAIGHT, FaceRotation.LEFT, FaceRotation.RIGHT, FaceRotation.UP, FaceRotation.DOWN))
-        tv_direct.text = ("Please keep your face " + FaceRotation.valueOfs[targetHeadRotations.first()])
+        targetHeadRotations = ArrayList(listOf(FaceRotation.LEFT, FaceRotation.RIGHT, FaceRotation.UP, FaceRotation.DOWN, FaceRotation.STRAIGHT))
+        tv_direct.text = ("Please turn your face " + FaceRotation.valueOfs[targetHeadRotations.first()])
 
         tts = TextToSpeech(this) {
-            tts.language = Locale.US
+            tts.language = Locale.UK
+            tts.speak(tv_direct.text.toString(), TextToSpeech.QUEUE_FLUSH, null, null)
         }
-        tts.speak(tv_direct.text.toString(), TextToSpeech.QUEUE_FLUSH, null, null)
+        cameraExecutor = Executors.newSingleThreadExecutor();
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
@@ -136,6 +137,7 @@ class MainActivity : AppCompatActivity(), ImageAnalyzer.CallBackAnalyzer {
     private fun onDetectionCompleted() {
         faceDetector.close()
         cameraExecutor.shutdown()
+        Thread.sleep(1000)
         val intent = Intent(this, DetectionResultsActivity::class.java)
         startActivity(intent)
     }
@@ -150,7 +152,9 @@ class MainActivity : AppCompatActivity(), ImageAnalyzer.CallBackAnalyzer {
                 onDetectionCompleted()
                 return
             }
-            tv_direct.text = ("Please turn your face " + FaceRotation.valueOfs[rotation + 1])
+            //change direction
+            tv_direct.text = if (targetHeadRotations.first() == FaceRotation.STRAIGHT) "Please keep your face straight"
+            else "Please turn your face ${FaceRotation.valueOfs[rotation + 1]}"
             tts.speak(tv_direct.text.toString(), TextToSpeech.QUEUE_FLUSH, null, null)
         }
     }
@@ -165,8 +169,9 @@ class FaceRotation {
         const val RIGHT = 2
         const val UP = 3
         const val DOWN = 4
-        const val ANGLE = 38
+        val ANGLE = 40
         val valueOfs = mapOf(STRAIGHT to "straight", LEFT to "left", RIGHT to "right", UP to "up", DOWN to "down")
+        val straightBoundary = 10.0
     }
 }
 
@@ -215,7 +220,9 @@ class ImageAnalyzer(var detector: FaceDetector) : ImageAnalysis.Analyzer {
                     when {
                         rotX > FaceRotation.ANGLE -> callBackAnalyzer.onFaceAngleChange(FaceRotation.UP)
                         rotX < -FaceRotation.ANGLE -> callBackAnalyzer.onFaceAngleChange(FaceRotation.DOWN)
-                        else -> callBackAnalyzer.onFaceAngleChange(FaceRotation.STRAIGHT)
+                        rotX in -FaceRotation.straightBoundary..FaceRotation.straightBoundary &&
+                                rotY in -FaceRotation.straightBoundary..FaceRotation.straightBoundary
+                        -> callBackAnalyzer.onFaceAngleChange(FaceRotation.STRAIGHT)
                     }
                 }
             }

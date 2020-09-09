@@ -30,7 +30,6 @@
         android:text="Please turn your face "
         android:textColor="@android:color/holo_green_dark"
         android:textSize="20sp"
-        android:background="@android:color/background_light"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />

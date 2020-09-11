@@ -135,6 +135,7 @@ class TextRecognitionActivity : AppCompatActivity() {
                 Toast.makeText(baseContext, msg, Toast.LENGTH_LONG).show()
                 Log.d(Constants.TAG, msg)
                 stopPreview()
+                //text recognition here
                 if (times++ == 2) {
                     onRecognitionCompleted()
                     return

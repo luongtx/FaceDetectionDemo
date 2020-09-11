@@ -52,8 +52,8 @@ class FaceAnalyzer(var detector: FaceDetector) : ImageAnalysis.Analyzer {
                     when {
                         rotX > FaceRotation.ANGLE -> callBackAnalyzer.onFaceAngleChange(FaceRotation.UP)
                         rotX < -FaceRotation.ANGLE -> callBackAnalyzer.onFaceAngleChange(FaceRotation.DOWN)
-                        rotX in -FaceRotation.straightBoundary..FaceRotation.straightBoundary &&
-                                rotY in -FaceRotation.straightBoundary..FaceRotation.straightBoundary
+                        rotX in -FaceRotation.STRAIGHT_BOUNDARY..FaceRotation.STRAIGHT_BOUNDARY &&
+                                rotY in -FaceRotation.STRAIGHT_BOUNDARY..FaceRotation.STRAIGHT_BOUNDARY
                         -> callBackAnalyzer.onFaceAngleChange(FaceRotation.STRAIGHT)
                     }
                 }

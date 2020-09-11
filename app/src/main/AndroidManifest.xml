@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.facedetectiondemo">
+    package="com.example.ekycdemo">
 
     <application
         android:allowBackup="true"
@@ -9,9 +9,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".DetectionResultsActivity" />
+        <activity android:name="com.example.ekycdemo.DetectionResultsActivity" />
+        <activity android:name="com.example.ekycdemo.FaceDetectionActivity"/>
         <activity
-            android:name=".MainActivity"
+            android:name="com.example.ekycdemo.TextRecognitionActivity"
             android:exported="true">
             <meta-data
                 android:name="com.google.firebase:firebase-ml-vision.DEPENDENCIES"

@@ -1,4 +1,4 @@
-package com.example.facedetectiondemo
+package com.example.ekycdemo
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle

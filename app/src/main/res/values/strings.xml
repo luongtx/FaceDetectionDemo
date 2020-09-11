@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">FaceDetectionDemo</string>
-    <string name="wrong_direction">WRONG DIRECTION</string>
+    <string name="app_name">EkycDemo</string>
+    <string name="wrong_direction">Wrong Direction</string>
 </resources>

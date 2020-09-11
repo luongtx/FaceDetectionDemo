@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".FaceDetectionActivity">
 
     <TextView
         android:id="@+id/tv_rotation"
@@ -35,7 +35,7 @@
         app:layout_constraintRight_toRightOf="parent" />
 
     <androidx.camera.view.PreviewView
-        android:id="@+id/viewFinder"
+        android:id="@+id/prv_face_detection"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
